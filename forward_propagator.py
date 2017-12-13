@@ -2,20 +2,34 @@
 forward propagator
 
 Usage:
-    forward_propagator.py -i INPUTS -w WEIGHTS
+    forward_propagator.py -i INPUTS -w WEIGHTS [--a=<ACTUAL>] [--act=<ACTIVATOR>]
 
 Options:
-    -h, --help  show this help message
-    -i INPUTS   Comma separated list of inputs
-    -w WEIGHTS  Comma separated list of weights
-
+    -h, --help        Show this help message
+    -i INPUTS         Comma separated list of inputs
+    -w WEIGHTS        Comma separated list of weights
+    --a=<ACTUAL>      The actual value
+    --act=<ACTIVATOR> The activator function
 """
 import docopt
-from operator import mul
 
-def forward_propagator(inputs, weights):
+activators = {
+    'identity': lambda x: x,
+    'relu': lambda x: max(0, x),
+    'binstep': lambda x: 0 if x < 0 else 1,
+    'logistic': lambda x: 1 / (1 + math.exp(-x)),
+    'softsign': lambda x: x / (1 + abs(x)),
+    'leakyrelu': lambda x: 0.01 * x if x < 0 else x
+}
+
+def forward_propagator(inputs, weights, actual=0, activator='relu'):
     if ((len(weights) - len(inputs)) % pow(len(inputs), 2)) != 0:
         raise Exception("Incorrect number of weights provided.")
+
+    try:
+        activator = activators[activator]
+    except KeyError:
+        activator = activators['identity']
 
     dot = lambda X, Y: sum(map(lambda x, y: x * y, X, Y))
 
@@ -35,16 +49,20 @@ def forward_propagator(inputs, weights):
         print("epoch weights: {}".format(epoch_weights))
         print("node input weights: {}".format(node_input_weights))
 
-        sums = [dot(node_weights, node_inputs) for node_weights in node_input_weights]
+        sums = [activator(dot(node_weights, node_inputs)) for node_weights in node_input_weights]
         print("sums: {}".format(sums))
 
         print("")
 
         node_inputs = sums
-    return dot(node_output_weights, node_inputs)
+    ret = dot(node_output_weights, node_inputs)
+
+    return ret - actual
 
 if __name__ == "__main__":
     args = docopt.docopt(__doc__)
-    args['-i'] = [int(x) for x in args['-i'].split(',')]
-    args['-w'] = [int(x) for x in args['-w'].split(',')]
-    print(forward_propagator(inputs=args['-i'], weights=args['-w']))
+    args['-i'] = [float(x) for x in args['-i'].split(',')]
+    args['-w'] = [float(x) for x in args['-w'].split(',')]
+    actual = float(args['--a']) if args['--a'] is not None else 0
+    activator = args['--act'] if args['--act'] is not None else 'identity'
+    print(forward_propagator(inputs=args['-i'], weights=args['-w'], actual=actual, activator=activator))
