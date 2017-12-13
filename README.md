@@ -3,6 +3,11 @@
 This script will calculate the forward propagation output for a given set of
 inputs and weights.
 
+Here is an example:
+
+<img width="522" alt="screen shot 2017-12-12 at 22 17 14" src="https://user-images.githubusercontent.com/407905/33924369-a29f60fa-df8a-11e7-85a1-64c8d7867a5e.png">
+
+
 ```
 $ virtualenv venv
 $ . venv/bin/activate
